@@ -1,0 +1,39 @@
+<style lang="less">
+
+</style>
+<template>
+	<button @tap="toExam">去答题</button>
+
+</template>
+
+<script>
+	import wepy from 'wepy'
+
+	export default class Index extends wepy.page {
+		config = {
+			navigationBarTitleText: '首页'
+		}
+		components = {
+		}
+
+		mixins = []
+
+		data = {
+		}
+
+		computed = {
+		}
+
+		methods = {
+			toExam(){
+				wepy.navigateTo({url:'exam'})
+			}
+		}
+
+		events = {
+		}
+
+		onLoad() {
+		}
+	}
+</script>

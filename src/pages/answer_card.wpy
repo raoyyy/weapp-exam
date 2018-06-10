@@ -1,0 +1,76 @@
+<style lang='less'>
+</style>
+<template>
+    <view wx:if="{{hasSubmit}}">正确率：{{accuracy}}%</view>
+    <view>已完成{{hasAnswerCount}}题，共{{questions.length}}题</view>
+    <block wx:for="{{questions}}" wx:for-item="question">
+        <view wx:if="{{hasSubmit}}" id="{{index}}" style="{{question.isCorrect?'color:green':'color:red'}}" @tap="toQuestion">第{{index+1}}题 {{question.isCorrect?'回答正确':'回答错误'}}</view>
+        <view wx:else id="{{index}}" style="{{question.hasAnswer?'color:green':'color:gray'}}" @tap="toQuestion">第{{index+1}}题 {{question.hasAnswer?'已作答':'未作答'}}</view>
+    </block>
+
+</template>
+
+<script>
+	import wepy from 'wepy'
+
+	export default class Exam extends wepy.page {
+		config = {
+			navigationBarTitleText: '答题卡'
+		}
+		components = {}
+
+		data = {
+            questions: [],
+            hasAnswerCount: 0,
+            hasSubmit: false,
+            accuracy:0
+		}
+
+		computed = {}
+
+		methods = {
+            toQuestion(e){
+                var id = e.currentTarget.id
+                var pages = getCurrentPages()
+                var prevPage = pages[pages.length - 2]
+                // TODO 这里修改前一个页面的数据，有没有更好的办法？
+                // prevPage.data.current = id
+                console.log(prevPage)
+                console.log(id)
+                // prevPage.changeCurrent(2)
+                prevPage.setData({current:id})
+                wepy.navigateBack()
+            }
+		}
+		events = {}
+
+		async onLoad(options) {
+            var pages = getCurrentPages();
+            var prevPage = pages[pages.length - 2];
+            var correctCount = 0
+            this.questions = prevPage.data.questions
+            if (options.type == 'submit') {
+                this.hasSubmit = true
+                this.questions.map(question=>{
+                    var isCorrect = true
+                    question.options.map(option=>{
+                        if (option.isAnswer !== option.chosen) {
+                            isCorrect =false
+                        }
+                    })
+                    if (isCorrect) {
+                        correctCount++
+                    }
+                    question.isCorrect = isCorrect
+                })
+            }
+            this.questions.map(question=>{
+                if (question.hasAnswer) {
+                    this.hasAnswerCount++
+                }
+            })
+            this.accuracy = correctCount/this.questions.length*100
+            this.$apply()
+		}
+	}
+</script>

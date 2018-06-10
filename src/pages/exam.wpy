@@ -1,0 +1,112 @@
+<style lang='less'>
+</style>
+<template>
+	<swiper style="height:100%" @change="swiperChange" current="{{current}}">
+        <block wx:for="{{questions}}" wx:for-item="question" wx:for-index="questionIndex">
+            <swiper-item>
+				<view>{{question.type}}</view>
+				<view>{{questionIndex+1}}/{{questions.length}}</view>
+				<view>{{question.title}}</view>
+				<block  wx:for="{{question.options}}" wx:for-item="option">
+					<view id="{{index}}" @tap="choseOption" style="{{option.chosen?'color:orange':''}}" data-type="{{question.type}}" data-questionIndex="{{questionIndex}}">{{option.index}} {{option.title}}</view>
+				</block>
+				<block wx:if="{{questionIndex+1 == questions.length}}">
+					<button @tap="openAnswerCard">查看答题卡</button>
+					<button @tap="submit">提交</button>
+				</block>
+				<block wx:else>
+					<button wx:if="{{question.type == '多选题'}}" @tap="next">下一题</button>
+				</block>
+            </swiper-item>
+        </block>
+    </swiper>
+</template>
+
+<script>
+	import wepy from 'wepy'
+
+	export default class Exam extends wepy.page {
+		config = {
+			navigationBarTitleText: '测试'
+		}
+		components = {}
+
+		data = {
+			current: 0,
+			questions: []
+		}
+
+		computed = {}
+
+		methods = {
+			swiperChange(e) {
+				if (e.detail.source == 'touch') {
+					this.current = e.detail.current
+					this.$apply()
+				}
+			},
+			// switchSwiper(e) {
+			// 	console.log(e.currentTarget.id)
+			// 	this.current = e.currentTarget.id
+			// 	this.$apply()
+			// },
+			next(){
+				this.current++
+				this.$apply()
+			},
+			choseOption(e) {
+				var {type,questionindex} = e.currentTarget.dataset
+				var that = this
+				var id = e.currentTarget.id
+				var options = this.questions[questionindex].options
+				if (type == '单选题') {
+					options.map(option=>{
+						option.chosen = false
+					})
+					this.questions[questionindex].hasAnswer = true
+				}
+				options[id].chosen = !options[id].chosen
+				if (type == '多选题') {
+					var hasAnswer = false
+					options.map(option=>{
+						if (option.chosen) hasAnswer = true
+					})
+					this.questions[questionindex].hasAnswer = hasAnswer
+				}
+				if (type == '单选题' && questionindex !== this.questions.length-1) {
+					this.current++
+				}
+				this.$apply()
+			},
+			openAnswerCard() {
+				wepy.navigateTo({url:'answer_card'})
+			},
+			submit() {
+				wepy.navigateTo({url:'answer_card?type=submit'})
+			},
+			changeCurrent(current) {
+				console.info(current)
+				this.setData({current:2})
+			}
+		}
+		events = {}
+
+		async onLoad(options) {
+			var pages = getCurrentPages();
+            console.log(pages)
+			if (options.question_index){
+				this.current = options.question_index
+			}
+			var { data: { questions } } = await wepy.request(
+			'http://localhost:3000/questions'
+			)
+			this.questions = questions
+			this.$apply()
+		}
+		onShow(){
+			console.log(this.$wxpage.data.current)
+			this.current = this.$wxpage.data.current
+			this.$apply()
+		}
+	}
+</script>
