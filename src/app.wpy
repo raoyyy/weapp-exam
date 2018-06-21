@@ -24,8 +24,8 @@
 		config = {
 			pages: [
 				'pages/index',
+				'pages/answer_card',
 				'pages/exam',
-				'pages/answer_card'
 			],
 			window: {
 				backgroundTextStyle: 'light',

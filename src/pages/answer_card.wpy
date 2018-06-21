@@ -1,13 +1,83 @@
 <style lang='less'>
+    page {
+            height:100%;
+            box-sizing: border-box;
+            line-height: 1;
+            background-color:white;
+            font-family: -apple-system-font, "Helvetica Neue", sans-serif;
+        }
+        
+    .container {
+		padding: 0rpx 30rpx 30rpx 30rpx;
+		height: 100%;
+	}
+
+    .header {
+        display:block;
+        height: 455rpx;
+        width: 300rpx;
+        margin: 0 auto;
+        border: 2rpx solid #eee;
+        border-radius: 300rpx;
+    }
+
+    .txt {
+        padding: 50rpx 0 50rpx 0;
+        text-align: center;
+    }
+
+    .percent {
+        text-align: center;
+        font-size:60rpx
+    }
+
+    .center {
+        height: 60rpx;
+        margin: 30rpx 0 30rpx 0;
+    }
+
+    .footer {
+        height: 100%;  
+        margin-top:30rpx;
+    }
+
+    .option {
+        display: inline-block;
+		height: 60rpx;
+		width: 60rpx;
+		border: 1px solid #24cc24;
+		border-radius: 60rpx;
+		line-height:60rpx;
+		text-align:center;
+        margin-right: 30rpx;
+        margin:0 45rpx 50rpx 30rpx;
+        overflow: hidden;
+    }
+
+    .correct {
+        background-color:#63e063;
+    }
 </style>
 <template>
-    <view wx:if="{{hasSubmit}}">正确率：{{accuracy}}%</view>
-    <view>已完成{{hasAnswerCount}}题，共{{questions.length}}题</view>
-    <block wx:for="{{questions}}" wx:for-item="question">
-        <view wx:if="{{hasSubmit}}" id="{{index}}" style="{{question.isCorrect?'color:green':'color:red'}}" @tap="toQuestion">第{{index+1}}题 {{question.isCorrect?'回答正确':'回答错误'}}</view>
-        <view wx:else id="{{index}}" style="{{question.hasAnswer?'color:green':'color:gray'}}" @tap="toQuestion">第{{index+1}}题 {{question.hasAnswer?'已作答':'未作答'}}</view>
+<view class="container">
+    <block wx:if="{{hasSubmit}}">
+        <view  class="header" wx:if="{{hasSubmit}}"><view class="txt">正确率</view><view class="percent">{{accuracy}}%</view></view>
+        <view class="center">已完成{{hasAnswerCount}}题，共{{questions.length}}题</view>
+        <view class="footer">
+            <view class="option" wx:for="{{questions}}" wx:for-item="question">
+                <view class="{{ question.isCorrect?'correct':''}}">{{index+1}}</view>
+            </view>
+        </view>
     </block>
-
+    <block wx:else>
+        <view class="footer">
+            <view class="option" wx:for="{{questions}}" wx:for-item="question">
+                <view class="{{ question.hasAnswer?'correct':''}}" id="{{index}}" @tap="toQuestion">{{index+1}}</view>
+            </view> 
+            <view style="text-align:center">共{{questions.length}}道题，还有{{questions.length-hasAnswerCount}}道题未作答</view>           
+        </view>
+    </block>
+</view>
 </template>
 
 <script>
@@ -23,10 +93,12 @@
             questions: [],
             hasAnswerCount: 0,
             hasSubmit: false,
+            mistakes:[],
             accuracy:0
 		}
 
-		computed = {}
+		computed = {
+        }
 
 		methods = {
             toQuestion(e){
@@ -69,7 +141,20 @@
                     this.hasAnswerCount++
                 }
             })
-            this.accuracy = correctCount/this.questions.length*100
+            this.questions.map(question=>{
+                if (!question.isCorrect) {
+                    //错题
+                    this.mistakes.push(question._id)
+                }
+            })
+            await wepy.request({
+						url:'http://localhost:3000/mistakes',
+						method:'POST',
+						data: {
+							user_id: this.mistakes
+						}
+					})
+            this.accuracy = ((correctCount*100/this.questions.length).toFixed(1))
             this.$apply()
 		}
 	}
