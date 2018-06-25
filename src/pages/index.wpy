@@ -2,8 +2,10 @@
 
 </style>
 <template>
-	<button @tap="toExam">去答题</button>
-
+	<view>
+		<button @tap="toExam">去答题</button>
+		<button @tap="toMistakes">查看错题</button>
+	</view>
 </template>
 
 <script>
@@ -27,6 +29,9 @@
 		methods = {
 			toExam(){
 				wepy.navigateTo({url:'exam'})
+			},
+			toMistakes(){
+				wepy.navigateTo({url:'mistakes'})
 			}
 		}
 

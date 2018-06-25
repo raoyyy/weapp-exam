@@ -126,8 +126,18 @@
                 this.questions.map(question=>{
                     var isCorrect = true
                     question.options.map(option=>{
-                        if (option.isAnswer !== option.chosen) {
-                            isCorrect =false
+                        // if (option.isAnswer !== option.chosen)) {
+                        //     isCorrect =false
+                        // }
+                        if(option.chosen){
+                            //已经选择
+                            if(option.isAnswer !== option.chosen ){
+                                isCorrect =false
+                            }
+                        } else {
+                            if(option.isAnswer){
+                                isCorrect =false
+                            }
                         }
                     })
                     if (isCorrect) {
@@ -147,13 +157,14 @@
                     this.mistakes.push(question._id)
                 }
             })
-            await wepy.request({
-						url:'http://localhost:3000/mistakes',
-						method:'POST',
-						data: {
-							user_id: this.mistakes
-						}
-					})
+            var { data: { myUserInfo } } = await wepy.request({
+				method:"PUT",
+				url:'http://localhost:3000/mistakes',
+				data: {
+					user_id:"raoyu0928",
+					mistakes:this.mistakes
+				}
+			})
             this.accuracy = ((correctCount*100/this.questions.length).toFixed(1))
             this.$apply()
 		}

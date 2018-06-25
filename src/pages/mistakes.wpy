@@ -1,0 +1,224 @@
+<style lang="less">
+	page {
+		height:100%;
+		box-sizing: border-box;
+		line-height: 1;
+		background-color:white;
+		font-family: -apple-system-font, "Helvetica Neue", sans-serif;
+
+	}
+
+	.container {
+		padding: 0rpx 30rpx 30rpx 30rpx;
+		height: 100%;
+	}
+
+	.swiper {
+		width: 100%;
+		height: 100%;
+	}
+
+	.header {
+		height: 100rpx;
+		border-bottom: 1px solid #eee;
+		text{
+			line-height: 100rpx;
+			vertical-align: center;
+		}
+	}
+
+	.right {
+		float:right;
+	}
+
+	.main {
+		margin: 20rpx 0 20rpx 0;
+	}
+
+	.main .title {
+		margin: 20rpx 0 20rpx 0;
+	}
+
+	.main .option {
+		padding:10rpx 0 10rpx 0;
+		display:block;
+		margin:20rpx 0 20rpx 0;
+	}
+
+	.alpha {
+		display: inline-block;
+		height: 60rpx;
+		width: 60rpx;
+		border: 1px solid #24cc24;
+		border-radius: 60rpx;
+		line-height:60rpx;
+		text-align:center;
+	}
+
+	.txt {
+		display: inline-block;
+		margin-left: 30rpx;
+	}
+
+	.ans_card{
+		display: inline-block;
+		height: 100rpx;
+		width:200rpx;
+		margin:50rpx 100rpx 50rpx 50rpx;
+		border:1px solid #eee;
+		line-height:100rpx;
+		text-align:center;
+		color:#24cc24;
+		border-radius:15rpx;
+
+	}
+
+	.submit_button{
+		display: inline-block;
+		height: 100rpx;
+		width:200rpx;
+		background-color: #24cc24;
+		border:1px solid #eee;
+		line-height:100rpx;
+		text-align:center;
+		color:white;
+		border-radius:15rpx;
+
+	}
+
+</style>
+<template>
+	<view class="container">
+		<swiper class="swiper" @change="swiperChange" current="{{current}}">
+            <view wx:if="{{questions.length}}">
+                <block wx:for="{{questions}}" wx:for-item="question" wx:for-index="questionIndex">
+                    <swiper-item>
+                        <view class="header">
+                            <text>{{question.type}}</text>
+                            <text class="right"><text style="color:#63e063">{{questionIndex+1}}</text>/{{questions.length}}</text>
+                        </view>
+                        <view class="main">
+                            <view class="title"><text>{{question.title}}</text></view>
+                            <block wx:for="{{question.options}}" wx:for-item="option">
+                                <view class="option" id="{{index}}" @tap="choseOption" style="{{option.chosen?'background:#eee':''}}" data-type="{{question.type}}" data-questionIndex="{{questionIndex}}"><view class="alpha">{{option.index}}</view> <view class="txt">{{option.title}}</view></view>
+                            </block>
+                        </view>					
+                        <block wx:if="{{questionIndex+1 == questions.length}}">
+                            <view class="ans_card" @tap="openAnswerCard"><text>查看答题卡</text></view>
+                            <view class="submit_button" @tap="submit"><text style="color:white">交卷</text></view>
+                        </block>
+                        <block wx:else>
+                            <button wx:if="{{question.type == '多选题'}}" @tap="next">下一题</button>
+                        </block>
+                        <view wx:if="{{hasSubmit}}">
+                            本题{{question.hasAnswer?'已':'未'}}作答：正确答案为{{question.answer}}。{{question.isCorrect?"正确":"错误"}}
+                        </view>
+                    </swiper-item>
+                </block>
+            </view>
+            <view wx:else>
+                <swiper-item>
+                    <view>没有错题</view>
+                </swiper-item>
+            </view>
+        </swiper>
+	</view>
+</template>
+
+<script>
+	import wepy from 'wepy'
+
+	export default class Exam extends wepy.page {
+		config = {
+			navigationBarTitleText: '测试'
+		}
+		components = {}
+
+		data = {
+			current: 0,
+			questions: [],
+			hasSubmit: false
+		}
+
+		computed = {
+		}
+
+		methods = {
+			swiperChange(e) {
+				if (e.detail.source == 'touch') {
+					this.current = e.detail.current
+					this.$apply()
+				}
+			},
+			// switchSwiper(e) {
+			// 	console.log(e.currentTarget.id)
+			// 	this.current = e.currentTarget.id
+			// 	this.$apply()
+			// },
+			next(){
+				this.current++
+				this.$apply()
+			},
+			choseOption(e) {
+				console.log(e.currentTarget) //questionindex type
+				var {type,questionindex} = e.currentTarget.dataset
+				var that = this
+				var id = e.currentTarget.id
+				var options = this.questions[questionindex].options
+				if (type == '单选题' || type == '判断题') {
+					options.map(option=>{
+						option.chosen = false
+					})
+					this.questions[questionindex].hasAnswer = true
+				}
+				options[id].chosen = !options[id].chosen
+				if (type == '多选题') {
+					var hasAnswer = false
+					options.map(option=>{
+						if (option.chosen) hasAnswer = true
+					})
+					this.questions[questionindex].hasAnswer = hasAnswer
+				}
+				if (type == '单选题'|| type == '判断题' && questionindex !== this.questions.length-1) {
+					this.current++
+				}
+				this.$apply()
+			},
+			openAnswerCard() {
+				wepy.navigateTo({url:'answer_card'})
+			},
+			submit() {
+				wepy.navigateTo({url:'answer_card?type=submit'})
+			},		
+			changeCurrent(current) {
+				console.info(current)
+				this.setData({current:2})
+			}
+		}
+
+		events = {}
+
+		async onLoad(options) {
+			var pages = getCurrentPages();
+			console.log(pages)
+			if (options.question_index){
+				this.current = options.question_index
+			}
+			var { data: { mistakesQuestions } } = await wepy.request({
+                url:'http://localhost:3000/mistakes/myMistakes',
+                method:'GET',
+                data: {
+                    user_id:"raoyu0928"
+                }
+            })
+            console.log("mistakesQuestions: "+mistakesQuestions)
+            this.questions = mistakesQuestions
+			this.$apply()
+		}
+		onShow(){
+			console.log(this.$wxpage.data.current)
+			this.current = this.$wxpage.data.current
+			this.$apply()
+		}
+	}
+</script>
