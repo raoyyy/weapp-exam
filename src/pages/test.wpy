@@ -1,0 +1,235 @@
+<style lang="less">
+	page {
+		height:100%;
+		box-sizing: border-box;
+		line-height: 1;
+		background-color:white;
+		font-family: -apple-system-font, "Helvetica Neue", sans-serif;
+
+	}
+
+	.container {
+		padding: 0rpx 30rpx 30rpx 30rpx;
+        height: 100%;
+        display: block;
+	}
+
+	.swiper {
+		width: 100%;
+		height: 100%;
+	}
+
+	.header {
+		height: 100rpx;
+		border-bottom: 1px solid #eee;
+		text{
+			line-height: 100rpx;
+			vertical-align: center;
+		}
+	}
+
+	.right {
+		float:right;
+	}
+
+	.main {
+		margin: 20rpx 0 20rpx 0;
+	}
+
+	.main .title {
+		margin: 20rpx 0 20rpx 0;
+	}
+
+	.main .option {
+		padding:10rpx 0 10rpx 0;
+		display:block;
+		margin:20rpx 0 20rpx 0;
+	}
+
+	.alpha {
+		display: inline-block;
+		height: 60rpx;
+		width: 60rpx;
+		border: 1px solid #24cc24;
+		border-radius: 60rpx;
+		line-height:60rpx;
+		text-align:center;
+	}
+
+	.txt {
+		display: inline-block;
+		margin-left: 30rpx;
+	}
+
+	.ans_card{
+		display: inline-block;
+		height: 100rpx;
+		width:200rpx;
+		margin:50rpx 100rpx 50rpx 50rpx;
+		border:1px solid #eee;
+		line-height:100rpx;
+		text-align:center;
+		color:#24cc24;
+		border-radius:15rpx;
+
+	}
+
+	.submit_button{
+		display: inline-block;
+		height: 100rpx;
+		width:200rpx;
+		background-color: #24cc24;
+		border:1px solid #eee;
+		line-height:100rpx;
+		text-align:center;
+		color:white;
+		border-radius:15rpx;
+
+    }
+    
+    .answer{
+        margin-top:100rpx
+    }
+
+    .answer view {
+        margin: 20rpx 0 20rpx 0
+    }
+
+</style>
+<template>
+	<view class="container">
+        <view class="header">
+            <text>{{question.type}}</text>
+        </view>
+        <view class="main">
+            <view class="title"><text>{{question.title}}</text></view>
+            <block wx:for="{{question.options}}" wx:for-item="option">
+                <view class="option" id="{{index}}" @tap="choseOption" style="{{option.chosen?'background:#eee':''}}" data-type="{{question.type}}" data-questionIndex="{{questionIndex}}"><view class="alpha">{{option.index}}</view> <view class="txt">{{option.title}}</view></view>
+            </block>
+        </view>					
+        <block>
+            <button wx:if="{{question.type == '多选题'}}" @tap="showAnswer">我选好了</button>
+        </block>
+        <block wx:if="{{hasAnswer}}">
+            <view class="answer">
+                <view>答案解析：{{answer}}</view>
+                <button @tap="next">下一题</button>
+            </view>
+        </block>
+	</view>
+</template>
+
+<script>
+	import wepy from 'wepy'
+
+	export default class Exam extends wepy.page {
+		config = {
+			navigationBarTitleText: '测试'
+		}
+		components = {}
+
+		data = {
+            questions: [],
+            question: {},
+            questionIndex: 0,
+            hasAnswer: false,
+            answer:'请移步Google'
+		}
+
+		computed = {
+		}
+
+		methods = {
+			// swiperChange(e) {
+			// 	if (e.detail.source == 'touch') {
+            //         this.current = e.detail.current
+            //         this.hasAnswer = false
+			// 		this.$apply()
+			// 	}
+			// },
+			next(){
+                // this.question = 
+                var questionIndex = this.questionIndex++
+                console.log("questionIndex: "+questionIndex)
+                this.question = this.questions[questionIndex+1]
+                this.hasAnswer = false
+				this.$apply()
+			},
+			choseOption(e) {
+                var hasAnswer = this.hasAnswer
+                if(!hasAnswer){
+                    //选择后就不能改变选项
+                    console.log(e.currentTarget) //questionindex type
+                    var {type} = e.currentTarget.dataset
+                    var questionindex = this.questionIndex //第i题
+                    // console.log(questionIndex)
+                    var that = this
+                    var id = e.currentTarget.id
+                    var options = this.questions[questionindex].options
+                    if (type == '单选题' || type == '判断题') {
+                        options[id].chosen = true
+                        console.log(id)
+                        this.questions[questionindex].hasAnswer = true
+                    }
+                    if (type == '单选题' || type == '判断题') {
+                        options.map(option=>{
+                            option.chosen = false
+                        })
+                        this.questions[questionindex].hasAnswer = true
+                    }
+                    options[id].chosen = !options[id].chosen
+                    if (type == '多选题') {
+                        var hasAnswer = false
+                        options.map(option=>{
+                            if (option.chosen) hasAnswer = true
+                        })
+                        this.questions[questionindex].hasAnswer = hasAnswer
+                    }
+                    if (type == '单选题'|| type == '判断题' && questionindex !== this.questions.length-1) {
+                        // this.current++
+                        this.hasAnswer = true
+                    }
+                    this.$apply()
+                }
+            },
+            showAnswer(){
+                this.hasAnswer = true
+            },
+			// openAnswerCard() {
+			// 	wepy.navigateTo({url:'answer_card'})
+			// },
+			// submit() {
+			// 	wepy.navigateTo({url:'answer_card?type=submit'})
+			// },		
+			// changeCurrent(current) {
+			// 	console.info(current)
+			// 	this.setData({current:2})
+			// }
+		}
+
+		events = {}
+
+		async onLoad(options) {
+            var questionIndex = 0;
+			var pages = getCurrentPages();
+			console.log(pages)
+			if (options.question_index){
+				this.questionIndex = options.question_index
+			}
+			var { data: { questions } } = await wepy.request(
+			'http://localhost:3000/questions'
+			)
+            this.questions = questions
+            if(questions.length>0){
+                this.question = questions[0]
+            }
+
+			this.$apply()
+		}
+		onShow(){
+			console.log(this.$wxpage.data.current)
+			this.current = this.$wxpage.data.current
+			this.$apply()
+		}
+	}
+</script>

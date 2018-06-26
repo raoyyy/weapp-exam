@@ -205,7 +205,7 @@
 				this.current = options.question_index
 			}
 			var { data: { mistakesQuestions } } = await wepy.request({
-                url:'http://localhost:3000/mistakes/myMistakes',
+                url:'http://localhost:3000/users/myMistakes',
                 method:'GET',
                 data: {
                     user_id:"raoyu0928"

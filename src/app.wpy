@@ -26,7 +26,8 @@
 				'pages/index',
 				'pages/answer_card',
 				'pages/exam',
-				'pages/mistakes'
+				'pages/mistakes',
+				'pages/test'
 			],
 			window: {
 				backgroundTextStyle: 'light',

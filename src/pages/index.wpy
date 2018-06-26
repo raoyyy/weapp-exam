@@ -5,6 +5,7 @@
 	<view>
 		<button @tap="toExam">去答题</button>
 		<button @tap="toMistakes">查看错题</button>
+		<button @tap="toTest">小试牛刀</button>
 	</view>
 </template>
 
@@ -32,6 +33,9 @@
 			},
 			toMistakes(){
 				wepy.navigateTo({url:'mistakes'})
+			},
+			toTest(){
+				wepy.navigateTo({url:'test'})
 			}
 		}
 

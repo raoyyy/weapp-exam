@@ -159,7 +159,7 @@
             })
             var { data: { myUserInfo } } = await wepy.request({
 				method:"PUT",
-				url:'http://localhost:3000/mistakes',
+				url:'http://localhost:3000/users/mistakes',
 				data: {
 					user_id:"raoyu0928",
 					mistakes:this.mistakes
