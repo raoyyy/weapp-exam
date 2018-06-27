@@ -50,7 +50,7 @@
 		display: inline-block;
 		height: 60rpx;
 		width: 60rpx;
-		border: 1px solid #24cc24;
+		border: 1px solid #ccc;
 		border-radius: 60rpx;
 		line-height:60rpx;
 		text-align:center;
@@ -95,6 +95,22 @@
         margin: 20rpx 0 20rpx 0
     }
 
+    .correct {
+        background: #24cc24
+    }
+
+    .isWrong {
+        background: #ec503b
+    }
+
+    .option_chosen {
+        background:#eee
+    }
+
+    .option_timeout {
+        background: white
+    }
+
 </style>
 <template>
 	<view class="container">
@@ -104,16 +120,19 @@
         <view class="main">
             <view class="title"><text>{{question.title}}</text></view>
             <block wx:for="{{question.options}}" wx:for-item="option">
-                <view class="option" id="{{index}}" @tap="choseOption" style="{{option.chosen?'background:#eee':''}}" data-type="{{question.type}}" data-questionIndex="{{questionIndex}}"><view class="alpha">{{option.index}}</view> <view class="txt">{{option.title}}</view></view>
+                <view class="option {{option.chosen?'option_chosen':''}} {{option.timeout?'option_timeout':''}}" id="{{index}}" @tap="choseOption" data-type="{{question.type}}" data-questionIndex="{{questionIndex}}"><view class="alpha {{option.isCorrect? 'correct':''}} {{option.isWrong? 'isWrong':''}}">{{option.index}}</view> <view class="txt">{{option.title}}</view></view>
             </block>
         </view>					
         <block>
-            <button wx:if="{{question.type == '多选题'}}" @tap="showAnswer">我选好了</button>
+            <button wx:if="{{isShow && question.type=='多选题'}}" @tap="showAnswer">我选好了</button>
         </block>
         <block wx:if="{{hasAnswer}}">
             <view class="answer">
+                <view>正确答案 <text>{{question.answer}},</text>您的答案 
+                    <text wx:for="{{question.options}}" wx:for-item="option"><text wx:if="{{option.chosen}}"><text>{{option.index}}</text></text></text>
+                </view>
                 <view>答案解析：{{answer}}</view>
-                <button @tap="next">下一题</button>
+                <button wx:if="{{isLast}}" @tap="next">下一题</button>
             </view>
         </block>
 	</view>
@@ -133,6 +152,9 @@
             question: {},
             questionIndex: 0,
             hasAnswer: false,
+            isLast: true,
+            id:[],
+            isShow:true,
             answer:'请移步Google'
 		}
 
@@ -140,15 +162,9 @@
 		}
 
 		methods = {
-			// swiperChange(e) {
-			// 	if (e.detail.source == 'touch') {
-            //         this.current = e.detail.current
-            //         this.hasAnswer = false
-			// 		this.$apply()
-			// 	}
-			// },
 			next(){
-                // this.question = 
+                this.id = []
+                this.isShow = true
                 var questionIndex = this.questionIndex++
                 console.log("questionIndex: "+questionIndex)
                 this.question = this.questions[questionIndex+1]
@@ -163,21 +179,35 @@
                     var {type} = e.currentTarget.dataset
                     var questionindex = this.questionIndex //第i题
                     // console.log(questionIndex)
-                    var that = this
                     var id = e.currentTarget.id
+                    this.id.push(id)
                     var options = this.questions[questionindex].options
                     if (type == '单选题' || type == '判断题') {
-                        options[id].chosen = true
-                        console.log(id)
-                        this.questions[questionindex].hasAnswer = true
-                    }
-                    if (type == '单选题' || type == '判断题') {
+                        
                         options.map(option=>{
                             option.chosen = false
+                            option.timeout = false
+                            if(option.isAnswer){
+                              option.isCorrect = true    
+                            }
                         })
+                        if(!options[id].isAnswer){
+                            options[id].isWrong = true
+                        }
                         this.questions[questionindex].hasAnswer = true
+
                     }
                     options[id].chosen = !options[id].chosen
+                    if(options[id].chosen){
+                        options[id].chosen = true
+                        var that = this
+                        //添加样式 一段时间后选项的背景颜色恢复
+                        // setTimeout(function(){
+                        //     console.log(231)
+                        //     options[id].timeout = true
+                        //     that.$apply()
+                        // },500)
+                    }
                     if (type == '多选题') {
                         var hasAnswer = false
                         options.map(option=>{
@@ -185,15 +215,25 @@
                         })
                         this.questions[questionindex].hasAnswer = hasAnswer
                     }
-                    if (type == '单选题'|| type == '判断题' && questionindex !== this.questions.length-1) {
+                    if (type == '单选题'|| type == '判断题') {
                         // this.current++
                         this.hasAnswer = true
+                    }
+                    if(questionindex == this.questions.length-1){
+                        this.isLast = false
                     }
                     this.$apply()
                 }
             },
             showAnswer(){
+                console.log(this.id)
+                this.isShow = false
                 this.hasAnswer = true
+                this.question.options.map(option => {
+                    if(option.isAnswer){
+                        option.isCorrect = true
+                    }
+                })
             },
 			// openAnswerCard() {
 			// 	wepy.navigateTo({url:'answer_card'})
